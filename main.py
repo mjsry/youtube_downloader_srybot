@@ -33,7 +33,7 @@ async def download(update: Update, context: ContextTypes.DEFAULT_TYPE):
 def quality_formats(link):
         cookies_path = os.path.join(os.getcwd(), 'cookies.txt')
         ydl_opts = {
-        'cookies': cookies_path,
+        #'cookies': cookies_path,
         #'proxy': 'PvMHOBNAzQ:DFTbCPY40E@77.93.143.103:34819',
         }
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
