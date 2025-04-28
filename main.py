@@ -54,7 +54,12 @@ async def downloading(update: Update, context: ContextTypes.DEFAULT_TYPE):
             formats = quality_formats(link)
             for format in formats :
                 height = format.get('height')
-                if height and height not in seen_height and int(height) >= 360 and ext == 'mp4':
+                if (
+                        height and height not in seen_height and int(height) >= 360
+                        and format.get('ext') == 'mp4'
+                        and format.get('vcodec') != 'none'
+                        and format.get('acodec') != 'none'
+                ):
                     btn_text = f'{format['height']}p'
                     btn_data = format['format_id']
                     keys.append([InlineKeyboardButton(text=btn_text,callback_data=btn_data)])
@@ -88,7 +93,8 @@ async def quality_selected(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     ydl_opts = {
         'format': data,
-        'outtmpl': f'{user_id}_%(title)s.%(ext)s'
+        'outtmpl': f'{user_id}_%(title)s.%(ext)s',
+        'merge_output_format': 'mp4'
     }
 
     try:
