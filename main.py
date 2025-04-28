@@ -54,7 +54,7 @@ async def downloading(update: Update, context: ContextTypes.DEFAULT_TYPE):
             formats = quality_formats(link)
             for format in formats :
                 height = format.get('height')
-                if height and height not in seen_height and int(height) >= 360:
+                if height and height not in seen_height and int(height) >= 360 and ext == 'mp4':
                     btn_text = f'{format['height']}p'
                     btn_data = format['format_id']
                     keys.append([InlineKeyboardButton(text=btn_text,callback_data=btn_data)])
@@ -84,7 +84,7 @@ async def quality_selected(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     link = user_state[user_id]['link']
-    await query.edit_message_text('درحال دانلود ویدیوتم...')
+    msg = await query.edit_message_text('درحال دانلود ویدیوتم...')
 
     ydl_opts = {
         'format': data,
@@ -98,6 +98,7 @@ async def quality_selected(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         await context.bot.send_video(chat_id=user_id, video=open(file_path, 'rb'))
         os.remove(file_path)
+        await context.bot.delete_message(chat_id=user_id, message_id=msg.message_id)
 
     except Exception as e :
         txt = 'یه مشکلی موقع دانلود پیش اومد دوباره امتحان کن'
