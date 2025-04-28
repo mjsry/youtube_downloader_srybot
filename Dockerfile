@@ -1,17 +1,20 @@
-# Use the official Python image from the Docker Hub
+# Use official Python slim image
 FROM python:3.11-slim
 
-# Set the working directory in the container
+# Install ffmpeg and other dependencies
+RUN apt-get update && apt-get install -y ffmpeg && apt-get clean
+
+# Set work directory
 WORKDIR /app
 
-# Copy the requirements file into the container
+# Copy requirements first (to cache install)
 COPY requirements.txt .
 
-# Install the dependencies specified in requirements.txt
+# Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the rest of your application code into the container
-COPY ./ .
+# Copy all project files
+COPY . .
 
-# Run the application
+# Set the command to run your bot
 CMD ["python", "main.py"]
