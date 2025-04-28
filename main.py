@@ -126,5 +126,3 @@ def main():
     app.add_handler(CallbackQueryHandler(quality_selected))
 
     app.run_polling()
-
-main()
