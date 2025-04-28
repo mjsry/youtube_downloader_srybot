@@ -92,9 +92,13 @@ async def quality_selected(update: Update, context: ContextTypes.DEFAULT_TYPE):
     msg = await query.edit_message_text('درحال دانلود ویدیوتم...')
 
     ydl_opts = {
-        'format': data,
+        'format': f'{data}+bestaudio/best',
         'outtmpl': f'{user_id}_%(title)s.%(ext)s',
-        'merge_output_format': 'mp4'
+        'merge_output_format': 'mp4',
+        'postprocessors': [{
+            'key': 'FFmpegVideoConvertor',
+            'preferedformat': 'mp4'
+        }]
     }
 
     try:
@@ -102,7 +106,7 @@ async def quality_selected(update: Update, context: ContextTypes.DEFAULT_TYPE):
             info = ydl.extract_info(link, download=True)
             file_path = ydl.prepare_filename(info)
 
-        await context.bot.send_video(chat_id=user_id, video=open(file_path, 'rb'))
+        await context.bot.send_video(chat_id=user_id, video=open(file_path, 'rb'), supports_streaming=True)
         os.remove(file_path)
         await context.bot.delete_message(chat_id=user_id, message_id=msg.message_id)
 
