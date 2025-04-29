@@ -57,8 +57,8 @@ async def downloading(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 if (
                         height and height not in seen_height and int(height) >= 360
                         and format.get('ext') == 'mp4'
-                        and format.get('vcodec') != 'none'
-                        and format.get('acodec') != 'none'
+                        #and format.get('vcodec') != 'none'
+                        #and format.get('acodec') != 'none'
                 ):
                     btn_text = f"{format['height']}p"
                     btn_data = format['format_id']
