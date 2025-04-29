@@ -1,9 +1,10 @@
 from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes
 from telegram.ext import MessageHandler, filters, InlineQueryHandler, CallbackQueryHandler
-from telegram import KeyboardButton, ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton, Bot
+from telegram import KeyboardButton, ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton
 import os
 import yt_dlp
+from slugify import slugify  # برای تبدیل نام ویدیو به یک نام معتبر
 
 bot_token = '7884166478:AAEOxwa2H7SQ03C12AQZq0S3mJEUgq0XIVg'
 user_state = {}
@@ -31,38 +32,34 @@ async def download(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(txt)
 
 def quality_formats(link):
-        cookies_path = os.path.join(os.getcwd(), 'cookies.txt')
-        ydl_opts = {
-        #'cookies': cookies_path,
-        #'proxy': 'PvMHOBNAzQ:DFTbCPY40E@77.93.143.103:34819',
-        }
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(link, download=False)
-            formats = info.get('formats', [])
-            return formats
-
+    cookies_path = os.path.join(os.getcwd(), 'cookies.txt')
+    ydl_opts = {
+        # 'cookies': cookies_path,  # اگر نیاز به کوکی بود این خط رو فعال کنید
+    }
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        info = ydl.extract_info(link, download=False)
+        formats = info.get('formats', [])
+        return formats
 
 async def downloading(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_chat.id
     user_input = update.effective_message.text.strip()
 
-    if user_state[user_id] == 'downloading' :
-        try :
+    if user_state[user_id] == 'downloading':
+        try:
             link = user_input
             keys = []
             seen_height = set()
             formats = quality_formats(link)
-            for format in formats :
+            for format in formats:
                 height = format.get('height')
                 if (
                         height and height not in seen_height and int(height) >= 360
                         and format.get('ext') == 'mp4'
-                        #and format.get('vcodec') != 'none'
-                        #and format.get('acodec') != 'none'
                 ):
                     btn_text = f"{format['height']}p"
                     btn_data = format['format_id']
-                    keys.append([InlineKeyboardButton(text=btn_text,callback_data=btn_data)])
+                    keys.append([InlineKeyboardButton(text=btn_text, callback_data=btn_data)])
                     seen_height.add(height)
 
             markup = InlineKeyboardMarkup(keys)
@@ -91,9 +88,13 @@ async def quality_selected(update: Update, context: ContextTypes.DEFAULT_TYPE):
     link = user_state[user_id]['link']
     msg = await query.edit_message_text('درحال دانلود ویدیوتم...')
 
+    # استفاده از slugify برای اطمینان از نام معتبر فایل
+    video_title = 'عنوان ویدیو'  # اینجا می‌تونید از عنوان ویدیو استفاده کنید
+    safe_title = slugify(video_title)
+
     ydl_opts = {
         'format': f'{data}+bestaudio/best',
-        'outtmpl': f'{user_id}_video.%(ext)s',
+        'outtmpl': f'{user_id}_{safe_title}.%(ext)s',  # نام فایل با user_id و عنوان ویدیو
         'merge_output_format': 'mp4',
         'postprocessors': [{
             'key': 'FFmpegVideoConvertor',
@@ -102,7 +103,7 @@ async def quality_selected(update: Update, context: ContextTypes.DEFAULT_TYPE):
     }
 
     try:
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl :
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(link, download=True)
             file_path = ydl.prepare_filename(info)
 
@@ -110,12 +111,11 @@ async def quality_selected(update: Update, context: ContextTypes.DEFAULT_TYPE):
         os.remove(file_path)
         await context.bot.delete_message(chat_id=user_id, message_id=msg.message_id)
 
-    except Exception as e :
+    except Exception as e:
         txt = 'یه مشکلی موقع دانلود پیش اومد دوباره امتحان کن'
         await context.bot.send_message(chat_id=user_id, text=txt)
 
     user_state.pop(user_id, None)
-
 
 def main():
     app = Application.builder().token(bot_token).build()
@@ -126,4 +126,5 @@ def main():
     app.add_handler(CallbackQueryHandler(quality_selected))
 
     app.run_polling()
+
 main()
